@@ -14,6 +14,52 @@ Given a set of house features (X), predict the expected sale price (Y) so that [
 ---
 ## 💡** Solution**
 We designed an end-to-end MLOps pipeline (using ZenML for orchestration and MLflow for experiment tracking and model serving) that automates the full lifecycle of the price-prediction model — from data ingestion and feature engineering, through training and evaluation, to continuous deployment as a REST API. When a new model is trained, the pipeline evaluates it and automatically promotes it to a live MLflow prediction server if it meets the deployment criteria, replacing the previous version with zero manual intervention. Agents or downstream systems can then query the live endpoint (/invocations) with a house's features and receive a price estimate in real time, ensuring the valuation tool always reflects the latest trained model rather than a stale, manually-updated one.
+---
+## **⚙️Project Structure**
+```
+prices-predictor-system/
+│
+├── data/                          # Raw and/or processed datasets (inferred)
+│   └── AmesHousing.csv            # Ames Housing dataset used for training
+│
+├── pipelines/                     # ZenML pipeline definitions (confirmed import path)
+│   ├── training_pipeline.py       # Defines ml_pipeline() — ingestion → FE → train → evaluate
+│   └── deployment_pipeline.py     # Defines continuous_deployment_pipeline() & inference_pipeline()
+│
+├── steps/                         # Individual ZenML steps used inside the pipelines (inferred)
+│   ├── data_ingestion_step.py     # Loads raw data into a DataFrame
+│   ├── feature_engineering_step.py# Encoding, scaling, missing-value handling, etc.
+│   ├── data_splitter_step.py      # Train/test split
+│   ├── model_building_step.py     # Trains the regression model, logs to MLflow
+│   ├── model_evaluator_step.py    # Computes metrics (RMSE, R², etc.)
+│   └── model_deployer_step.py     # Deploys model via MLFlowModelDeployer if criteria pass
+│
+├── src/                           # Reusable helper/utility code (inferred, optional)
+│   └── ...                        # Custom transformers, config loaders, etc.
+│
+├── run_pipeline.py                # CLI entry point: runs the training pipeline (CONFIRMED)
+├── run_deployment.py              # CLI entry point: runs continuous deployment +
+│                                   # inference pipeline, or stops the service with
+│                                   # --stop-service (CONFIRMED)
+├── sample_predict.py              # Example client: sends a sample house record to the
+│                                   # live MLflow /invocations endpoint (CONFIRMED)
+│
+├── requirements.txt                # Python dependencies (inferred — not uploaded)
+├── config.yaml / .zen/             # ZenML stack & pipeline configuration (inferred)
+└── README.md                      # This file
+```
+
+## 🛠️Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Pipeline orchestration | [ZenML](https://zenml.io/) |
+| Experiment tracking & model registry | [MLflow](https://mlflow.org/) |
+| Model serving | MLflow Model Deployer (local REST server, `/invocations`) |
+| Language | Python |
+| CLI | [Click](https://click.palletsprojects.com/) |
+| Inference client | `requests` (JSON over HTTP) |
+| Console output | [Rich](https://github.com/Textualize/rich) |
 
 
 ## **📊 Dataset**
@@ -67,6 +113,7 @@ Given input X, predict Y for user/system Z at decision time T, to optimize busin
 ---
 
 ## 🏗️ MLOps Architecture
+![image Alt](https://github.com/bmwi7/House_Price-Pred-Using-MLops/blob/41d84c0b8ae34efa43b8fefb5ad2b5036fc3700f/mlops_pipeline_flow.png)
 
 ---
 ## **📊 Results**
@@ -99,18 +146,6 @@ Given input X, predict Y for user/system Z at decision time T, to optimize busin
 * Mispricing risk here is asymmetric and high-stakes (six-figure decisions), so this leans toward prioritizing risk mitigation over raw speed: confidence intervals/prediction ranges rather than a single point estimate, a human-in-the-loop review for outlier predictions, and monitoring for drift (housing markets shift fast — a model trained on older Ames-style data will decay).
 ---
 
-## 🛠️Tech Stack
-
-| Layer | Tool |
-|---|---|
-| Pipeline orchestration | [ZenML](https://zenml.io/) |
-| Experiment tracking & model registry | [MLflow](https://mlflow.org/) |
-| Model serving | MLflow Model Deployer (local REST server, `/invocations`) |
-| Language | Python |
-| CLI | [Click](https://click.palletsprojects.com/) |
-| Inference client | `requests` (JSON over HTTP) |
-| Console output | [Rich](https://github.com/Textualize/rich) |
-
 ## **🚀 Future Improvements**
 
 - **Automated retraining trigger** — currently a human re-runs `run_pipeline.py`; add a scheduled or drift-triggered retraining job instead of manual kickoff.
@@ -124,5 +159,5 @@ Given input X, predict Y for user/system Z at decision time T, to optimize busin
 
 ## **👨‍💻Author**
 
-**[Your Name]**
-[GitHub](https://github.com/your-username) · [LinkedIn](https://linkedin.com/in/your-profile) · [Email](mailto:your-email@example.com)
+**[Sahil Pathan]**
+[GitHub](https://github.com/your-username) · [LinkedIn](www.linkedin.com/in/sahil-pathan-5379b1282) ·
